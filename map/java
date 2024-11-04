@@ -1,9 +1,9 @@
-package com.example.test;
+package com.example.capstone_map;
 
 import android.Manifest;
 import android.content.pm.PackageManager;
-import android.location.Location;
 import android.os.Bundle;
+import android.util.Log;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -11,6 +11,8 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
+import com.google.android.gms.location.LocationServices;
+import com.google.gson.Gson;
 import com.naver.maps.geometry.LatLng;
 import com.naver.maps.map.CameraUpdate;
 import com.naver.maps.map.MapFragment;
@@ -20,14 +22,17 @@ import com.naver.maps.map.overlay.Marker;
 import com.naver.maps.map.util.FusedLocationSource;
 import com.naver.maps.map.LocationTrackingMode;
 import com.naver.maps.map.NaverMapSdk;
-import com.google.android.gms.location.LocationServices;
-import com.google.android.gms.location.FusedLocationProviderClient;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class MainActivity extends AppCompatActivity implements OnMapReadyCallback {
     private static final int LOCATION_PERMISSION_REQUEST_CODE = 1000;
     private FusedLocationSource locationSource;
     private NaverMap naverMap;
-    private FusedLocationProviderClient fusedLocationClient;
+
+    // 병원 데이터 리스트
+    private List<Datum> hospitalData = new ArrayList<>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -35,17 +40,147 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         setContentView(R.layout.activity_main);
 
         NaverMapSdk.getInstance(this).setClient(
-                new NaverMapSdk.NaverCloudPlatformClient("d15h90e9r9"));
+                new NaverMapSdk.NaverCloudPlatformClient("iaw7jo9bi6"));
 
         locationSource = new FusedLocationSource(this, LOCATION_PERMISSION_REQUEST_CODE);
-        fusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
 
-        MapFragment mapFragment = (MapFragment) getSupportFragmentManager().findFragmentById(R.id.map);
+        MapFragment mapFragment = (MapFragment) getSupportFragmentManager().findFragmentById(R.id.map_fragment);
         if (mapFragment == null) {
             mapFragment = MapFragment.newInstance();
-            getSupportFragmentManager().beginTransaction().add(R.id.map, mapFragment).commit();
+            getSupportFragmentManager().beginTransaction().add(R.id.map_fragment, mapFragment).commit();
         }
         mapFragment.getMapAsync(this);
+
+        // 병원 데이터를 직접 삽입
+        initializeHospitalData();
+    }
+
+    private void initializeHospitalData() {
+        hospitalData.add(new Datum("02-574-0901", "37.4836850972087", "127.034117823374", "국홍일국정표피부과의원", "점심시간 13:00-14:00 / 토요일 점심시간 13:00~13:30\n진료시간 1시간~1시간 30분 전 접수마감되므로 진료가능 여부 전화 확인 후 방문필요", "서울특별시 서초구 강남대로 221, 양재역환승주차장 302호 (양재동)"));
+        hospitalData.add(new Datum("02-856-0079", "37.495860314768", "126.888807280468", "권피부과의원", "2,4주 토요일 휴진\n휴게시간 12:40~14:00", "서울특별시 구로구 구로중앙로 68, 313,314호 (구로동, 신안타워)"));
+        hospitalData.add(new Datum("02-493-7653", "37.588132346722", "127.087205459165", "권피부과의원", "점심시간 13:00~14:00", "서울특별시 중랑구 겸재로 178 (면목동)"));
+        hospitalData.add(new Datum("02-2039-1477", "37.5576984952347", "127.079226104632", "그랜트피부과의원", "휴게시간 13:00~14:00", "서울특별시 광진구 천호대로 549, 지타워 3층 (중곡동)"));
+        hospitalData.add(new Datum("02-586-5500", "37.4772064227939", "126.983158383368", "그리니피부과의원", "휴게시간 13:00~14:00", "서울특별시 서초구 방배천로2길 5, 성지빌딩 2층 (방배동)"));
+        hospitalData.add(new Datum("02-512-1675", "37.5205955456524", "127.029681739673", "기분좋은피부과의원", "점심시간 13:00~14:00", "서울특별시 강남구 도산대로 211, 동현빌딩 4층 (신사동)"));
+        hospitalData.add(new Datum("02-2039-7550", "37.5415842490492", "126.972412765985", "김낙인피부과의원", "점심시간 13:00~14:00", "서울특별시 용산구 한강대로 259, 210,211호 (갈월동, 고려에이트리움)"));
+        hospitalData.add(new Datum("02-549-8599", "37.5095904764341", "127.02246462083", "김덕현피부과의원", "점심(12:00-14:00)", "서울특별시 강남구 강남대로 532"));
+        hospitalData.add(new Datum("02-414-7557", "37.5090453335185", "127.125513382654", "김동건피부과의원", "휴게시간 13:00~14:00", "서울특별시 송파구 마천로 41 (방이동, 5층)"));
+        hospitalData.add(new Datum("02-2281-6589", "37.5572921201611", "127.028544269386", "김동준피부과의원", "점심시간 12:50~14:00", "서울특별시 성동구 행당로 87, 405호 (행당동, 대림리빙프라자)"));
+        hospitalData.add(new Datum("02-599-2419", "37.4981898766621", "126.986413740877", "김명애피부과의원", "휴게시간 13:00~14:00", "서울특별시 서초구 사평대로 18, 학림빌딩 202호중 일부(표시상203호)호 (방배동)"));
+        hospitalData.add(new Datum("02-456-9721", "37.5341117330817", "127.071843016145", "김성호피부과의원", "휴게시간 13:00~14:30", "서울특별시 광진구 뚝섬로 558 (자양동)"));
+        hospitalData.add(new Datum("02-396-0522", "37.5888670593446", "126.944454601124", "김소영피부과의원", "수요일 휴진/점심시간 13:00~14:00", "서울특별시 서대문구 통일로 448, 3층 (홍제동)"));
+        hospitalData.add(new Datum("02-470-0579", "37.5381084632581", "127.126395521678", "김앤김피부과의원", "휴게시간 13:00~14:00", "서울특별시 강동구 천호대로 1027 (천호동, 일동통상천호빌딩)"));
+        hospitalData.add(new Datum("02-3477-7070", "37.5071156980651", "127.009873208557", "김연진의퓨린피부과의원", "휴게시간 12:30~14:00", "서울특별시 서초구 잠원로 24, 4층 401,416호호 (반포동, 반포자이프라자)"));
+        hospitalData.add(new Datum("02-3216-2787", "37.5912879829227", "126.940485307056", "김영환피부과의원", "휴게시간 13:00~14:00", "서울특별시 서대문구 연희로 407 (홍은동)"));
+        hospitalData.add(new Datum("02-2654-0031", "37.5363966169946", "126.878549519127", "김유찬피부과의원", "휴게시간 13:00~15:00", "서울특별시 양천구 목동서로 67 (목동, 우성에펠타운빌딩)"));
+        hospitalData.add(new Datum("02-591-7789", "37.4882917952892", "126.981882930793", "김윤섭피부과의원", "13:00~14:00 휴게시간\n평일 16:30 접수마감\n토요일 12:30 접수마감", "서울특별시 동작구 동작대로 129 (사당동)"));
+        hospitalData.add(new Datum("02-887-8517", "37.4853400623865", "126.955561752124", "김재준피부과의원", "3월 둘째주부터 11 말일까지 토요일12까지 진료\n점심시간 13:00-14:00", "서울특별시 관악구 관악로 231-1, 3층 (봉천동)"));
+        hospitalData.add(new Datum("02-2117-1890", "37.6083998425637", "127.028743635895", "김정피부과의원", "점심시간 13:00~14:00", "서울특별시 성북구 동소문로 315 현대백화점 미아점 10층 (길음동)"));
+        hospitalData.add(new Datum("02-2682-1223", "37.4908597717871", "126.855759594087", "김지수피부과의원", "점심시간 12:30-14:00", "서울특별시 구로구 개봉로 57-1, 2층 (개봉동)"));
+        hospitalData.add(new Datum("02-414-0975", "37.50108611288404", "127.11046300069158", "김지은피부과의원", "점심시간 13:00-14:00", "서울특별시 송파구 송파대로 345, 1A동 3041호일부,3042호 (가락동, 헬리오시티)"));
+        hospitalData.add(new Datum("02-445-5373", "37.4909138011658", "127.081055413987", "김진권피부과의원", "점심시간 13:00-14:00", "서울특별시 강남구 일원로 33, 금성빌딩 (일원동)"));
+        hospitalData.add(new Datum("02-980-5687", "37.6138335845815", "127.029606516765", "김피부과의원", "휴게시간 12:50~14:20", "서울특별시 강북구 도봉로 53 (미아동)"));
+        hospitalData.add(new Datum("02-3143-7582", "37.5539919996593", "126.922151520568", "김한피부과의원", "점심시간 13:00~14:00", "서울특별시 마포구 양화로 73, 체리스빌딩 6층 (서교동)"));
+        hospitalData.add(new Datum("02-3421-7563", "37.6066828647187", "127.095563510586", "김한중피부과의원", "평일 13:00-14:00 휴게시간", "서울특별시 중랑구 신내로 82, 301호 (신내동, 금강프라자)"));
+        hospitalData.add(new Datum("02-567-0307", "37.4975437191647", "127.052642849551", "김혜영피부과의원", "점심시간 13:00-14:00", "서울특별시 강남구 선릉로 312, 303호 (대치동)"));
+        hospitalData.add(new Datum("02-2232-7582", "37.5479592488437", "127.022119217387", "김희옥피부과의원", "30분 전 접수마감\n병원 사정상 일찍 마감 될 수 있음.\n휴게시간 12:30~14:00", "서울특별시 성동구 독서당로 300, 5층 (금호동4가)"));
+        hospitalData.add(new Datum("02-439-3300", "37.5805476991971", "127.087203744311", "나미피부과의원", "휴게시간 13:00~14:00", "서울특별시 중랑구 사가정로 384, 3,4층 (면목동)"));
+        hospitalData.add(new Datum("02-6959-7533", "37.5583260419142", "126.973107617589", "나음피부과의원", "휴게시간 13:30~15:00", "서울특별시 중구 세종대로 13, 5,6층 (남대문로5가)"));
+        hospitalData.add(new Datum("02-761-1010", "37.5246490570692", "126.926838629184", "나의미래피부과의원", "평일 13:30-14:30 휴게시간", "서울특별시 영등포구 국제금융로2길 7, 3층 (여의도동, 두레빌딩)"));
+        hospitalData.add(new Datum("02-375-0500", "37.5779528826091", "126.889887582062", "나의미래피부과의원", "휴게시간 13:30~15:00", "서울특별시 마포구 월드컵북로 381, 2층 208~210호 (상암동, 상암월드컵파크4단지상가)"));
+        hospitalData.add(new Datum("02-2232-2502", "37.5527412987045", "127.009208809574", "나이스피부과의원", "휴게시간 12:30~14:00", "서울특별시 중구 다산로 96, 4층 (신당동)"));
+        hospitalData.add(new Datum("02-353-9990", "37.619122183963", "126.920201767929", "나인피부과의원", "휴게시간 13:00~14:00", "서울특별시 은평구 통일로 855-8, 연신내진원와이타운 9,10층 901,902,1002호 (갈현동)"));
+        hospitalData.add(new Datum("02-599-9990", "37.5034475706091", "127.024446802561", "나인피부과의원", "점심시간: 13:30~14:30", "서울특별시 서초구 강남대로 463, 리젠메디컬타워 10,12층 (서초동)"));
+        hospitalData.add(new Datum("02-512-3375", "37.5218891903752", "127.0392984689", "네이처피부과의원", "점심시간: 13:00~14:00\n화요일, 목요일 전화문의", "서울특별시 강남구 선릉로 753 (논현동)"));
+        hospitalData.add(new Datum("02-554-9565", "37.4987767279505", "127.027830562268", "노바에스피부과의원", "점심시간 13:00~14:30", "서울특별시 강남구 강남대로 402, 5층 (역삼동, 시계탑빌딩)"));
+        hospitalData.add(new Datum("02-3446-9523", "37.5220964864574", "127.027229149732", "눈피부과의원", "휴게시간 13:00~14:00", "서울특별시 강남구 도산대로27길 33, 201호 (신사동)"));
+        hospitalData.add(new Datum("02-3477-2020", "37.4976292615599", "127.028728605033", "강남고운세상피부과의원", "점심시간: 13:00~14:30(평일)/13:00~14:00(토요일)", "서울특별시 강남구 테헤란로2길 8, 3층 (역삼동)"));
+        hospitalData.add(new Datum("1588-7833", "37.4888657676631", "127.052014632509", "강남리더스피부과의원", "평일 점심시간 13:00~14:00", "서울특별시 강남구 언주로30길 21, 2층 203호 (도곡동, 아카데미스위트)"));
+        hospitalData.add(new Datum("02-542-0080", "37.5277893680236", "127.038031549131", "다인피부과의원", "점심시간13:00~14:00\n대체휴일, 수요일 예약전화(025420080) 가능", "서울특별시 강남구 압구정로50길 8, 3층 (신사동)"));
+        hospitalData.add(new Datum("02-937-0043", "37.6544097398982", "127.062410925814", "닥터로피부과의원", "점심시간 13:00-14:00\n공휴일, 일요일 예약진료 가능", "서울특별시 노원구 노해로 490 (상계동)"));
+        hospitalData.add(new Datum("02-533-9333", "37.503673521633", "127.010632415458", "닥터스피부과의원", "9월 23,30일 13시 진료시작", "서울특별시 서초구 서초중앙로 249, 5,6층 (반포동)"));
+        hospitalData.add(new Datum("02-702-3033", "37.5461944939177", "126.95214128315", "닥터스피부과의원", "점심시간 13:00-14:00", "서울특별시 마포구 마포대로 127, 2층 201호 (공덕동, 풍림브이아이피텔)"));
+        hospitalData.add(new Datum("02-2634-9090", "37.5104826397728", "126.889481191271", "닥터스피부과의원", "평일 12:30-14:00 휴게시간", "서울특별시 구로구 경인로67길 23, 305-1,2호 (신도림동, 신도림2차푸르지오)"));
+        hospitalData.add(new Datum("1670-1637", "37.5167802830689", "127.02010810325", "닥터스피부과의원", "점심시간 13:00-14:00", "서울특별시 강남구 도산대로 107, 10층 (신사동)"));
+        hospitalData.add(new Datum("02-6437-0082", "37.613699372646", "127.03052852605", "닥터스피부과의원", "휴게시간 13:00~14:00", "서울특별시 강북구 도봉로 52, 연이빌딩 4층 (미아동)"));
+        hospitalData.add(new Datum("02-420-7702", "37.5045912862017", "127.106846702056", "닥터스피부과의원", "점심시간 13:00-14:00", "서울특별시 송파구 백제고분로 364, 대신빌딩 5층 (석촌동)"));
+        hospitalData.add(new Datum("02-356-7572", "37.6123341513595", "126.928663502355", "닥터스피부과의원은평점", "점심시간 13:00-14:00", "서울특별시 은평구 통일로 750, 4층 (불광동)"));
+        hospitalData.add(new Datum(null, "37.52601143092", "127.04044210149", "닥터이레이저피부과의원", "점심시간 13:00-14:00", "서울특별시 강남구 선릉로 830, 공신진흥빌딩 2층 (청담동)"));
+        hospitalData.add(new Datum("02-453-7900", "37.5588238392141", "127.088006320923", "대원피부과의원", "휴게시간 13:00~14:00", "서울특별시 광진구 용마산로 58, 2층 (중곡동)"));
+        hospitalData.add(new Datum("02-2038-0259", "37.4980568379199", "127.060901364297", "대치더블유피부과의원", "휴게시간 13:00~14:00", "서울특별시 강남구 삼성로 233 (대치동, 신사빌딩 2층일부)"));
+        hospitalData.add(new Datum("02-564-1191", "37.4936757916501", "127.060358414855", "대치샘물피부과의원", "휴게시간 13:00~14:00", "서울특별시 강남구 남부순환로 2927, 대치 클래시아 2층 208. 209호 (대치동)"));
+        hospitalData.add(new Datum("02-577-1175", "37.4942633335042", "127.061934331534", "대치수피부과의원", "휴게시간 13:00~14:00", "서울특별시 강남구 남부순환로 2941"));
+        hospitalData.add(new Datum("02-501-4818", "37.4980396626336", "127.051760330195", "대치오라클피부과의원", "평일 13:00-14:00 점심시간", "서울특별시 강남구 선릉로 319, 2층 (역삼동)"));
+        hospitalData.add(new Datum("02-402-0220", "37.4868314347245", "127.120453991896", "더끌림피부과의원", "점심시간 13:30~14:30", "서울특별시 송파구 법원로 128, 문정에스케이브이원지엘메트로시티 B동 316,317호 (문정동)"));
+        hospitalData.add(new Datum("02-561-6718", "37.5039867294795", "127.050983171007", "더나인(The Nine)피부과의원", "목금토 진료\n점심시간 13:00~14:00", "서울특별시 강남구 테헤란로64길 14, 107∼109호(대치동,더나인오피스텔)"));
+        hospitalData.add(new Datum("02-565-1808", "37.5043293460531", "127.025061202164", "더레드피부과의원", "2,4주 토요일 휴진/점심시간 13:30~14:30", "서울특별시 강남구 강남대로 470, 808타워 9층 (역삼동)"));
+        hospitalData.add(new Datum("02-2677-9870", "37.5353702476966", "126.899505032826", "더리버피부과의원", "수요일 휴진(공휴일 있는 주 수요일 진료)\n휴게시간 12:45~14:00", "서울특별시 영등포구 양평로 68, 디엔빌딩 6층 (당산동6가)"));
+        hospitalData.add(new Datum("02-2699-0075", "37.5592736391913", "126.826136981493", "더리턴피부과의원", "평일 13:30-14:30 휴게시간", "서울특별시 강서구 공항대로 168, 5층 508,509,510호 (마곡동)"));
+        hospitalData.add(new Datum("02-443-2900", "37.4796870553794", "127.124979804141", "더마인피부과의원", "휴게시간 13:00~14:00", "서울특별시 송파구 송파대로 111, 205동 312호 (문정동, 파크하비오 하비오타워 법조대로)"));
+        hospitalData.add(new Datum("02-549-9277", "37.5145473024381", "127.059486615422", "더마주피부과의원", "수요일 휴진", "서울특별시 강남구 영동대로 607 (삼성동, 랜드마크빌딩 7층)"));
+        hospitalData.add(new Datum("02-541-2223", "37.525954523882", "127.033726746181", "더미소피부과의원", "13:00~14:00 휴게시간", "서울특별시 강남구 언주로 846, 글로벌메디컬빌딩 지하1층 (신사동)"));
+        hospitalData.add(new Datum("02-511-0079", "37.5233740565847", "127.027452017567", "더삼점영피부과의원", "목요일 휴진\n휴게시간 13:00~14:30", "서울특별시 강남구 압구정로28길 48, 4층 (신사동)"));
+        hospitalData.add(new Datum("02-514-8575", "37.5233461107324", "127.028652261959", "더서울피부과의원", "7/18, 7/24~7/25 휴무", "서울특별시 강남구 논현로 838, 5층 일부층 (신사동)"));
+        hospitalData.add(new Datum("02-568-1009", "37.4983617666614", "127.051567399686", "더셀피부과의원", "평일 점심시간 13:00~14:00", "서울특별시 강남구 선릉로 323, 3층,4층,5층 (역삼동)"));
+        hospitalData.add(new Datum("02-429-1011", "37.5649623335076", "127.174603355856", "더스킨피부과의원", "휴게시간 13:00~14:00", "서울특별시 강동구 아리수로 427, 중앙프라자 2층 202호 (강일동)"));
+        hospitalData.add(new Datum("02-6953-8085", "37.5419000229184", "127.044975552245", "더윤피부과의원", "평일 13:00-14:00 휴게시간\n공휴일이 있는 주에는 수요일 정상진료", "서울특별시 성동구 왕십리로 50, 지하1층 (성수동1가)"));
+        hospitalData.add(new Datum("02-977-3345", "37.6358704004552", "127.068692930122", "더초이스피부과의원", "휴게시간 13:00~14:00", "서울특별시 노원구 한글비석로 56, 미성아파트(미성상가) 1층 106호 (하계동)"));
+        hospitalData.add(new Datum("02-960-3469", "37.579230143677", "127.043474539053", "더힐피부과의원", "점심시간 13:00~14:00", "서울특별시 동대문구 왕산로36길 6, 힐스테이트 청량리 더퍼스트 101동 201~207호 (전농동)"));
+        hospitalData.add(new Datum("02-541-9790", "37.5195659036492", "127.019091004701", "더힐피부과의원", "2,4주째 일요일 휴진\n평일 13:00-14:00 휴게시간", "서울특별시 강남구 강남대로 652, 7층 (신사동)"));
+        hospitalData.add(new Datum("02-6484-8200", "37.5097590855867", "126.963859317475", "더힐피부과의원", "평일 12:30-14:00 휴게시간", "서울특별시 동작구 현충로 188, 르네상스 리버빌 102호 (흑석동)"));
+        hospitalData.add(new Datum("02-546-5745", "37.5225200597328", "127.028015739229", "도곡코코피부과의원", "점심시간 13:00~14:00", "서울특별시 강남구 논현로175길 26, 서우빌딩 2층 (신사동)"));
+        hospitalData.add(new Datum("02-2038-4600", "37.5213315429687", "127.0232467651367", "도루코피부과의원", "점심시간 13:00-14:00", "서울특별시 강남구 언주로152길 19, 도루코피부과의원 (논현동)"));
+        hospitalData.add(new Datum("02-3463-1140", "37.4857136858072", "127.033915562524", "도곡양재차앤박피부과의원", "점심시간 13:00~14:00", "서울특별시 강남구 강남대로 248, 목원빌딩 3층 (도곡동)"));
+        hospitalData.add(new Datum("02-926-1007", "37.592805385385", "127.016019767284", "돈암고운세상피부과의원", "휴게시간 13:00~14:00", "서울특별시 성북구 동소문로 97, 4층 (동소문동6가)"));
+        hospitalData.add(new Datum("02-3283-7582", "37.5056097068416", "126.889834342021", "동안피부과의원", "휴게시간 13:00~14:00", "서울특별시 구로구 새말로 89, 태영빌딩 4층 (구로동)"));
+        hospitalData.add(new Datum("02-922-3723", "37.5925747617089", "127.017088831326", "듀오피부과의원", "점심시간 13:00~14:00", "서울특별시 성북구 동소문로 106, 유타 6층 (동선동1가)"));
+        hospitalData.add(new Datum("02-515-6171", "37.5177039135144", "127.01950046392", "디라운지피부과의원", "접수는 2시간전에 마감됩니다", "서울특별시 강남구 강남대로 626, 6층 (신사동)"));
+        hospitalData.add(new Datum("02-6959-1255", "37.5546936843646", "127.15511458665", "디렉터피부과의원", "평일 점심시간 13:00-14:00/ 토요일 점심시간 없이 진료", "서울특별시 강동구 고덕로 266, 고덕역 대명벨리온 4층 411-416,418,419호 (명일동)"));
+        hospitalData.add(new Datum("02-561-1675", "37.522927137371", "127.039860222522", "디알피부과의원", "점심시간 13:00~14:00", "서울특별시 강남구 도산대로 404, 퍼스트빌딩 4층 (청담동)"));
+        hospitalData.add(new Datum("02-834-7001", "37.5002672614192", "126.916644177905", "디앤써피부과의원", "점심시간 13:00~14:00", "서울특별시 영등포구 신풍로 93, 메트하임 3층 301호 (신길동)"));
+        hospitalData.add(new Datum("02-306-9888", "37.5708154693004", "126.912242300278", "디엠씨(DMC)최한규피부과의원", "평일 13:00-14:00 휴게시간\n당일 진료는 방문 전 꼭 연락주시면 감사하겠습니다.", "서울특별시 서대문구 수색로 56"));
+        hospitalData.add(new Datum("02-3445-0803", "37.5261997085303", "127.026980286227", "디엠피부과의원", "7/13-15 휴무", "서울특별시 강남구 압구정로 158, 진우빌딩 4층 (신사동)"));
+        hospitalData.add(new Datum("02-6925-0409", "37.5288173852679", "126.966653789116", "디오디피부과의원", "평일 13:00-14:00 휴게시간", "서울특별시 용산구 한강대로 95, 2층 213,214호 (한강로2가, 래미안용산)"));
+        hospitalData.add(new Datum("02-6203-6263", "37.5239450916095", "127.042190023247", "디오디피부과의원", "평일 13:00-14:00 휴게시간", "서울특별시 강남구 도산대로 423, 1~3층 (청담동)"));
+        hospitalData.add(new Datum("02-3667-3875", "37.5332447828491", "126.902291122854", "디오피부과의원", "평일 13:00-14:00 휴게시간", "서울특별시 영등포구 당산로 222, 202-1호 (당산동5가, 당산디오빌)"));
+        hospitalData.add(new Datum("02-549-0043", "37.510364123748", "127.021248744999", "라인피부과의원", "13:00-14:00 휴게시간", "서울특별시 서초구 강남대로 543, 5층 (반포동, 국전빌딩)"));
+        hospitalData.add(new Datum("02-3444-1003", "37.5285677154605", "127.033354132164", "디앤에이피부과의원", "평일 13:00-14:00 휴게시간", "서울특별시 강남구 언주로 871, 호산병원 A동 5층 (신사동)"));
+        hospitalData.add(new Datum("02-487-7077", "37.5280657478158", "127.135874866354", "래미피부과의원", "목요일 1,3주 휴진", "서울특별시 강동구 양재대로 1365 (성내동, 심포니타워)"));
+        hospitalData.add(new Datum("02-522-6227", "37.4834556925679", "126.99597908077", "레디피부과의원", "평일 13:00-14:00 휴게시간", "서울특별시 서초구 방배로 105, 디엠타워 2관 4,5층 (방배동)"));
+        hospitalData.add(new Datum("02-511-7501", "37.5239684663137", "127.027758806248", "레아주서울피부과의원", "평일 13:00-14:00 휴게시간", "서울특별시 강남구 논현로 841, 제이비 미소빌딩 4층 403-A호,B호 (신사동)"));
+        hospitalData.add(new Datum("02-549-5052", "37.5079337330229", "127.038168392484", "라메스피부과의원", "점심시간 12:30~14:00", "서울특별시 강남구 강남대로 492 (논현동, 한맥빌딩 7층)"));
+        hospitalData.add(new Datum("02-565-8273", "37.4985303841214", "127.052094163626", "루미인피부과의원", "매월2, 4주 토요일 휴진", "서울특별시 강남구 선릉로 324, SH타워 3층 (대치동)"));
+        hospitalData.add(new Datum("02-588-2304", "37.4849415024327", "127.014765522044", "리뉴미피부과의원", "점심시간 13:00~14:00", "서울특별시 서초구 효령로 279, 삼경빌딩 2, 6층 (서초동)"));
+        hospitalData.add(new Datum("02-2275-5085", "37.5665548575457", "127.006251379421", "리뉴미피부과의원", "점심시간 13:00~14:00", "서울특별시 중구 을지로 251, 을지회관 2층 203호 (을지로6가)"));
+        hospitalData.add(new Datum("02-413-2303", "37.5113890255791", "127.083186991735", "리뉴미피부과의원", "점심시간 13:00~14:00", "서울특별시 송파구 올림픽로 114, 서경빌딩 9층 (잠실동)"));
+        hospitalData.add(new Datum("02-2607-7574", "37.5415777854068", "126.839107538296", "리뉴미피부과의원", "점심시간 13:00~14:00", "서울특별시 강서구 화곡로 157, 301, 302호 (화곡동)"));
+        hospitalData.add(new Datum("02-929-7574", "37.6197165290877", "127.023527167409", "리뉴미피부과의원", "점심시간 13:00~14:00", "서울특별시 성북구 화랑로 76, 수경빌딩 3층 (하월곡동)"));
+        hospitalData.add(new Datum("02-813-8111", "37.5047449090099", "126.945743519213", "리뉴피부과의원", "매월 두번째 네번째 수요일 휴진", "서울특별시 동작구 상도로 246, 더라함 3층 (상도동)"));
+        hospitalData.add(new Datum("1588-7833", "37.52649461709166", "126.87526332287048", "리더스피부과의원", "점심시간 13:00~14:00/백화점 휴점일:진료없음", "서울특별시 양천구 목동동로 257, B1층 (목동, 현대하이페리온)"));
+        hospitalData.add(new Datum("02-567-9357", "37.4973692137569", "127.055167024731", "리드미피부과의원", "3째주 토요일 휴진", "서울특별시 강남구 도곡로 409, 402호 (대치동)"));
+        hospitalData.add(new Datum("02-575-8275", "37.4826683155589", "127.036507410115", "리마인드피부과의원", "점심시간 14:00-15:00", "서울특별시 서초구 강남대로 206, 201호 (양재동)"));
+        hospitalData.add(new Datum("02-488-1368", "37.550576465974", "127.143517866289", "리멤버피부과의원", "1시간 30분 전 접수마감", "서울특별시 강동구 양재대로 1625, 숨결TOWER 6층 601호 (천호동)"));
+        hospitalData.add(new Datum("02-936-8253", "37.6517379130228", "127.061655342952", "리멤버피부과의원", "1시간 30분 전 접수마감", "서울특별시 노원구 동일로 1380, 상계동 국민은행 5층 (상계동)"));
+        hospitalData.add(new Datum("02-2234-7575", "37.5551608472355", "127.011192236466", "리멤버피부과의원", "1시간 30분 전 접수마감", "서울특별시 중구 다산로 128-1, 5층 (신당동)"));
+        hospitalData.add(new Datum("02-420-8877", "37.5208819816451", "127.104421421949", "리멤버피부과의원", "평일 점심시간 13:00~14:00/수요일 휴진(공휴일 있는 주 수요일 진료)", "서울특별시 송파구 올림픽로37길 130, 파크리오 A동 5층 508,509호 (신천동)"));
+        hospitalData.add(new Datum("02-2658-5901", "37.5600926354663", "126.838304106686", "리멤버피부과의원(강서마곡점)", "평일 점심시간 13:00~14:00/수요일 휴진(공휴일 있는 주 수요일 진료)", "서울특별시 강서구 강서로 385, 우성에스비타워 3층 302,303호 (마곡동)"));
+        hospitalData.add(new Datum("02-719-2016", "37.54434325520204", "126.93542513008785", "디큐어피부과의원", "소아진료(협조가능시)/봉합/교정/턱관절/", "서울특별시 마포구 토정로 222, 2층 202호 (신수동, 한국출판협동조합)"));
+        hospitalData.add(new Datum("02-543-0210", "37.5231196123278", "127.037598626747", "리원피부과의원", "2,4주 토요일 휴진 / 점심시간 12:30~14:00", "서울특별시 강남구 도산대로 327, 2,3층 (신사동)"));
+        hospitalData.add(new Datum("02-443-8575", "37.5110472091949", "127.128258090026", "리윤피부과의원", "평일 13:00-14:00 휴게시간", "서울특별시 송파구 양재대로 1164, 홍일빌딩 502호,503호 (오금동)"));
+        hospitalData.add(new Datum("02-542-9900", "37.524468270686874", "127.04636378205616", "로즈피부과의원", "점심시간 13:00~14:00", "서울특별시 강남구 도산대로 455, 3층 (청담동,CW빌딩)"));
+        hospitalData.add(new Datum("02-466-9033", "37.5804345971945", "127.088210625453", "리퓨어피부과의원", "1시간 전 접수마감", "서울특별시 중랑구 면목로 319, 삼성종합프라자 2층 우측호 (면목동)"));
+        hospitalData.add(new Datum("02-6677-6300", "37.5173261424208", "127.021465412617", "리프톤피부과의원", "1시간 전 접수마감", "서울특별시 강남구 도산대로 119, 9층 (신사동)"));
+        hospitalData.add(new Datum("02-2207-7707", "37.5947764065638", "127.085652863089", "리피부과의원", "1시간 전 접수마감", "서울특별시 중랑구 면목로 481, 5층 501호 (상봉동)"));
+        hospitalData.add(new Datum("02-567-0575", "37.4979496722429", "127.058839031611", "리피부과의원", "1시간 전 접수마감", "서울특별시 강남구 도곡로 442, 501호 (대치동, 진흥빌딩)"));
+        hospitalData.add(new Datum("02-424-5007", "37.5375121901099", "127.139588829365", "린피부과의원", "내과/유방외과/갑상선외과 평일 09:00~18:00  토요일 09:00~16:00          일.공휴일 진료 없음\n치과                                평일 09:00~18:00  토요일 09:00~14:00          일.공휴일 진료 없음", "서울특별시 강동구 양재대로 1473, 2층 203호 (길동)"));
+        hospitalData.add(new Datum("02-545-3462", "37.5257284350603", "127.027583996141", "림피부과의원", "내과/유방외과/갑상선외과 평일 09:00~18:00  토요일 09:00~16:00          일.공휴일 진료 없음\n치과                                평일 09:00~18:00  토요일 09:00~14:00          일.공휴일 진료 없음", "서울특별시 강남구 압구정로28길 14, 4층 (신사동)"));
+        hospitalData.add(new Datum("02-355-5533", "37.6118256229728", "126.917712097114", "마이디피부과의원", "평일 13:00-14:00 휴게시간", "서울특별시 은평구 연서로 146 (대조동, 3층)"));
+        hospitalData.add(new Datum("02-576-5033", "37.4853735070328", "127.034082861809", "마이디피부과의원", "주중 다른 휴무일 있을 때 목요일 진료합니다.\n평일 13:00-14:00 휴게시간", "서울특별시 강남구 강남대로 242, 크리스탈빌딩 4층 (도곡동)"));
+        hospitalData.add(new Datum("02-3444-8585", "37.5157514042207", "127.019161294387", "마이디피부과의원", "주중 다른 휴무일 있을 때 목요일 진료합니다.\n평일 13:00-14:00 휴게시간", "서울특별시 서초구 강남대로 605, 5층 (잠원동, 휴먼타워)"));
+        hospitalData.add(new Datum("02-790-7277", "37.5201457860245", "126.928416757298", "마이메디피부과의원", "점심시간 13:00-14:00", "서울특별시 용산구 독서당로 65, 효창세종빌딩 5층 (한남동)"));
+        hospitalData.add(new Datum("02-3443-1676", "37.5188619340221", "127.022152837373", "마이멘즈피부과의원", "점심시간 13:00-14:00", "서울특별시 강남구 강남대로 456, 한진빌딩 10층 1004호 (역삼동)"));
+        hospitalData.add(new Datum("02-594-5575", "37.5072895401722", "126.99396409888", "마이스킨의원", "매월 둘째 넷째 토요일 휴진 / 점심시간 13:00~14:00", "서울특별시 서초구 서초대로 74길 23, 서초동 금정빌딩 2층 (서초동)"));
+
     }
 
     @Override
@@ -53,34 +188,34 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         this.naverMap = naverMap;
         naverMap.setLocationSource(locationSource);
 
-        // 위치 추적 모드 설정 전에 권한 확인
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
             naverMap.setLocationTrackingMode(LocationTrackingMode.Follow);
-            showCurrentLocation();
+            addMarkersToMap();
         } else {
             ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, LOCATION_PERMISSION_REQUEST_CODE);
         }
     }
 
-    private void showCurrentLocation() {
-        if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
-            fusedLocationClient.getLastLocation().addOnSuccessListener(this, location -> {
-                if (location != null) {
-                    LatLng currentLatLng = new LatLng(location.getLatitude(), location.getLongitude());
-                    Marker marker = new Marker();
-                    marker.setPosition(currentLatLng);
-                    marker.setMap(naverMap);
+    private void addMarkersToMap() {
+        for (Datum data : hospitalData) {
+            LatLng latLng = new LatLng(Double.parseDouble(data.getWgs84lat()), Double.parseDouble(data.getWgs84lon()));
+            Marker marker = new Marker();
+            marker.setPosition(latLng);
+            marker.setMap(naverMap);
 
-                    // 카메라 위치를 현재 위치로 이동
-                    CameraUpdate cameraUpdate = CameraUpdate.scrollTo(currentLatLng);
-                    naverMap.moveCamera(cameraUpdate);
-                } else {
-                    Toast.makeText(this, "현재 위치를 가져올 수 없습니다.", Toast.LENGTH_SHORT).show();
-                }
+            // 마커 클릭 리스너 설정
+            marker.setOnClickListener(overlay -> {
+                Toast.makeText(this, "병원명: " + data.getDutyname() + "\n주소: " + data.getDutyaddr(), Toast.LENGTH_SHORT).show();
+                return true;
             });
-        } else {
-            // 권한이 없는 경우 처리
-            Toast.makeText(this, "위치 권한이 필요합니다.", Toast.LENGTH_SHORT).show();
+        }
+
+        if (!hospitalData.isEmpty()) {
+            LatLng firstLocation = new LatLng(
+                    Double.parseDouble(hospitalData.get(0).getWgs84lat()),
+                    Double.parseDouble(hospitalData.get(0).getWgs84lon())
+            );
+            naverMap.moveCamera(CameraUpdate.scrollTo(firstLocation));
         }
     }
 
@@ -89,13 +224,46 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         if (requestCode == LOCATION_PERMISSION_REQUEST_CODE) {
             if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                // 권한이 허용된 경우
                 naverMap.setLocationTrackingMode(LocationTrackingMode.Follow);
-                showCurrentLocation();
+                addMarkersToMap();
             } else {
-                // 권한이 거부된 경우
                 Toast.makeText(this, "위치 권한이 필요합니다.", Toast.LENGTH_SHORT).show();
             }
+        }
+    }
+
+    // Datum 데이터 클래스 정의
+    private static class Datum {
+        private String dutytel1;
+        private String wgs84lat;
+        private String wgs84lon;
+        private String dutyname;
+        private String dutyetc;
+        private String dutyaddr;
+
+        public Datum(String dutytel1, String wgs84lat, String wgs84lon, String dutyname, String dutyetc, String dutyaddr) {
+            this.dutytel1 = dutytel1;
+            this.wgs84lat = wgs84lat;
+            this.wgs84lon = wgs84lon;
+            this.dutyname = dutyname;
+            this.dutyetc = dutyetc;
+            this.dutyaddr = dutyaddr;
+        }
+
+        public String getWgs84lat() {
+            return wgs84lat;
+        }
+
+        public String getWgs84lon() {
+            return wgs84lon;
+        }
+
+        public String getDutyname() {
+            return dutyname;
+        }
+
+        public String getDutyaddr() {
+            return dutyaddr;
         }
     }
 }
