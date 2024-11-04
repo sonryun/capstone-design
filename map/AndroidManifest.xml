@@ -21,7 +21,7 @@
         //<meta-data>추가, value는 인증키
         <meta-data
             android:name="com.naver.maps.map.CLIENT_ID"
-            android:value="d15h90e9r9" />
+            android:value="iaw7jo9bi6" />
 
         <activity
             android:name=".MainActivity"
